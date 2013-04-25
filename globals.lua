@@ -1,6 +1,6 @@
 -- Global variables for luakit
 globals = {
-    homepage            = "http://luakit.org/",
+    homepage            = "http://google.com/",
  -- homepage            = "http://github.com/mason-larobina/luakit",
     scroll_step         = 40,
     zoom_step           = 0.1,
@@ -56,6 +56,8 @@ search_engines = {
     google      = "https://google.com/search?q=%s",
     imdb        = "http://www.imdb.com/find?s=all&q=%s",
     wikipedia   = "https://en.wikipedia.org/wiki/Special:Search?search=%s",
+    d           = "https://delicious.com/zerlington/search?p=%s",
+    av          = "http://www.amazon.com/s/ref=nb_sb_noss?url=search-alias%%3Dinstant-video&field-keywords=%s",
 }
 
 -- Set google as fallback search engine

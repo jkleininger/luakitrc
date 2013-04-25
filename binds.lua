@@ -39,8 +39,6 @@ end
 -- Adds the default menu widget bindings to a mode
 menu_binds = {
     -- Navigate items
-    key({},          "j",       function (w) w.menu:move_down() end),
-    key({},          "k",       function (w) w.menu:move_up()   end),
     key({},          "Down",    function (w) w.menu:move_down() end),
     key({},          "Up",      function (w) w.menu:move_up()   end),
     key({},          "Tab",     function (w) w.menu:move_down() end),
@@ -50,9 +48,6 @@ menu_binds = {
 -- Add binds to special mode "all" which adds its binds to all modes.
 add_binds("all", {
     key({}, "Escape", "Return to `normal` mode.",
-        function (w) w:set_mode() end),
-
-    key({"Control"}, "[", "Return to `normal` mode.",
         function (w) w:set_mode() end),
 
     -- Mouse bindings
@@ -151,18 +146,6 @@ add_binds("normal", {
         function (w) w:set_mode("command") end),
 
     -- Scrolling
-    key({}, "j", "Scroll document down.",
-        function (w) w:scroll{ yrel =  scroll_step } end),
-
-    key({}, "k", "Scroll document up.",
-        function (w) w:scroll{ yrel = -scroll_step } end),
-
-    key({}, "h", "Scroll document left.",
-        function (w) w:scroll{ xrel = -scroll_step } end),
-
-    key({}, "l", "Scroll document right.",
-        function (w) w:scroll{ xrel =  scroll_step } end),
-
     key({}, "Down", "Scroll document down.",
         function (w) w:scroll{ yrel =  scroll_step } end),
 
@@ -175,9 +158,6 @@ add_binds("normal", {
     key({}, "Right", "Scroll document right.",
         function (w) w:scroll{ xrel =  scroll_step } end),
 
-    key({}, "^", "Scroll to the absolute left of the document.",
-        function (w) w:scroll{ x =  0 } end),
-
     key({}, "$", "Scroll to the absolute right of the document.",
         function (w) w:scroll{ x = -1 } end),
 
@@ -186,44 +166,17 @@ add_binds("normal", {
             if not m.count then w:scroll{ y = 0 } else return false end
         end),
 
-    key({"Control"}, "e", "Scroll document down.",
-        function (w) w:scroll{ yrel =  scroll_step } end),
-
-    key({"Control"}, "y", "Scroll document up.",
-        function (w) w:scroll{ yrel = -scroll_step } end),
-
-    key({"Control"}, "d", "Scroll half page down.",
-        function (w) w:scroll{ ypagerel =  0.5 } end),
-
-    key({"Control"}, "u", "Scroll half page up.",
-        function (w) w:scroll{ ypagerel = -0.5 } end),
-
-    key({"Control"}, "f", "Scroll page down.",
-        function (w) w:scroll{ ypagerel =  1.0 } end),
-
-    key({"Control"}, "b", "Scroll page up.",
-        function (w) w:scroll{ ypagerel = -1.0 } end),
-
     key({}, "space", "Scroll page down.",
         function (w) w:scroll{ ypagerel =  1.0 } end),
 
-    key({"Shift"}, "space", "Scroll page up.",
-        function (w) w:scroll{ ypagerel = -1.0 } end),
+    key({"Shift"}, "space", "Scroll page down half.",
+        function (w) w:scroll{ ypagerel = 0.5 } end),
 
     key({}, "BackSpace", "Scroll page up.",
         function (w) w:scroll{ ypagerel = -1.0 } end),
 
-    key({}, "Page_Down", "Scroll page down.",
-        function (w) w:scroll{ ypagerel =  1.0 } end),
-
-    key({}, "Page_Up", "Scroll page up.",
-        function (w) w:scroll{ ypagerel = -1.0 } end),
-
-    key({}, "Home", "Go to the end of the document.",
-        function (w) w:scroll{ y =  0 } end),
-
-    key({}, "End", "Go to the top of the document.",
-        function (w) w:scroll{ y = -1 } end),
+    key({"Shift"}, "BackSpace", "Scroll page up half.",
+        function (w) w:scroll{ ypagerel = -0.5 } end),
 
     -- Specific scroll
     buf("^gg$", "Go to the top of the document.",
@@ -245,53 +198,9 @@ add_binds("normal", {
     key({}, "=", "Reset zoom level.",
         function (w, m) w:zoom_set() end),
 
-    buf("^z[iI]$", [[Enlarge text zoom of current page with `zi` or `zI` to
-        reduce full zoom.]],
-        function (w, b, m)
-            w:zoom_in(zoom_step  * m.count, b == "zI")
-        end, {count=1}),
-
-    buf("^z[oO]$", [[Reduce text zoom of current page with `zo` or `zO` to
-        reduce full zoom.]],
-        function (w, b, m)
-            w:zoom_out(zoom_step * m.count, b == "zO")
-        end, {count=1}),
-
-    -- Zoom reset or specific zoom ([count]zZ for full content zoom)
-    buf("^z[zZ]$", [[Set current page zoom to `[count]` percent with
-        `[count]zz`, use `[count]zZ` to set full zoom percent.]],
-        function (w, b, m)
-            w:zoom_set(m.count/100, b == "zZ")
-        end, {count=100}),
-
     -- Fullscreen
     key({}, "F11", "Toggle fullscreen mode.",
         function (w) w.win.fullscreen = not w.win.fullscreen end),
-
-    -- Clipboard
-    key({}, "p", [[Open a URL based on the current primary selection contents
-        in the current tab.]],
-        function (w)
-            local uri = luakit.selection.primary
-            if not uri then w:notify("No primary selection...") return end
-            w:navigate(w:search_open(uri))
-        end),
-
-    key({}, "P", [[Open a URL based on the current primary selection contents
-        in `[count=1]` new tab(s).]],
-        function (w, m)
-            local uri = luakit.selection.primary
-            if not uri then w:notify("No primary selection...") return end
-            for i = 1, m.count do w:new_tab(w:search_open(uri)) end
-        end, {count = 1}),
-
-    -- Yanking
-    key({}, "y", "Yank current URI to primary selection.",
-        function (w)
-            local uri = string.gsub(w.view.uri or "", " ", "%%20")
-            luakit.selection.primary = uri
-            w:notify("Yanked uri: " .. uri)
-        end),
 
     -- Commands
     key({"Control"}, "a", "Increment last number in URL.",
@@ -321,50 +230,18 @@ add_binds("normal", {
         function (w) w:enter_cmd(":winopen " .. (w.view.uri or "")) end),
 
     -- History
-    key({}, "H", "Go back in the browser history `[count=1]` items.",
+    key({"Control"}, "Left", "Go back in the browser history.",
         function (w, m) w:back(m.count) end),
 
-    key({}, "L", "Go forward in the browser history `[count=1]` times.",
-        function (w, m) w:forward(m.count) end),
-
-    key({}, "XF86Back", "Go back in the browser history.",
-        function (w, m) w:back(m.count) end),
-
-    key({}, "XF86Forward", "Go forward in the browser history.",
-        function (w, m) w:forward(m.count) end),
-
-    key({"Control"}, "o", "Go back in the browser history.",
-        function (w, m) w:back(m.count) end),
-
-    key({"Control"}, "i", "Go forward in the browser history.",
+    key({"Control"}, "Right", "Go forward in the browser history.",
         function (w, m) w:forward(m.count) end),
 
     -- Tab
-    key({"Control"}, "Page_Up", "Go to previous tab.",
-        function (w) w:prev_tab() end),
-
-    key({"Control"}, "Page_Down", "Go to next tab.",
-        function (w) w:next_tab() end),
-
     key({"Control"}, "Tab", "Go to next tab.",
         function (w) w:next_tab() end),
 
     key({"Shift","Control"}, "Tab", "Go to previous tab.",
         function (w) w:prev_tab() end),
-
-    buf("^gT$", "Go to previous tab.",
-        function (w) w:prev_tab() end),
-
-    buf("^gt$", "Go to next tab (or `[count]` nth tab).",
-        function (w, b, m)
-            if not w:goto_tab(m.count) then w:next_tab() end
-        end, {count=0}),
-
-    buf("^g0$", "Go to first tab.",
-        function (w) w:goto_tab(1) end),
-
-    buf("^g$$", "Go to last tab.",
-        function (w) w:goto_tab(-1) end),
 
     key({"Control"}, "t", "Open a new tab.",
         function (w) w:new_tab(globals.homepage) end),
@@ -386,15 +263,6 @@ add_binds("normal", {
                 (w.tabs:current() + m.count) % w.tabs:count())
         end, {count=1}),
 
-    buf("^gH$", "Open homepage in new tab.",
-        function (w) w:new_tab(globals.homepage) end),
-
-    buf("^gh$", "Open homepage.",
-        function (w) w:navigate(globals.homepage) end),
-
-    buf("^gy$", "Duplicate current tab.",
-        function (w) w:new_tab(w.view.history or "") end),
-
     key({}, "r", "Reload current tab.",
         function (w) w:reload() end),
 
@@ -406,6 +274,12 @@ add_binds("normal", {
 
     key({"Control", "Shift"}, "R", "Restart luakit (reloading configs).",
         function (w) w:restart() end),
+
+
+
+    -- continue here
+
+
 
     -- Window
     buf("^ZZ$", "Quit and save the session.",
